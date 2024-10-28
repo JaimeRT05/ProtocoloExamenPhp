@@ -1,0 +1,140 @@
+// Ocultar todos los formularios al inicio
+document.addEventListener("DOMContentLoaded", function() {
+    ocultarFormularios();
+});
+
+function ocultarFormularios() {
+    const formularios = document.querySelectorAll('.formularios');
+    formularios.forEach(form => form.style.display = 'none');
+}
+
+// Event Listeners para el menú
+document.getElementById("importarProvincia").addEventListener("click", importarProvincias);
+document.getElementById("consultaLocalidad").addEventListener("click", mostrarConsultaLocalidades);
+document.getElementById("nuevaSala").addEventListener("click", mostrarNuevaSala);
+document.getElementById("nuevaPelicula").addEventListener("click", mostrarNuevaPelicula);
+document.getElementById("consultaPelicula").addEventListener("click", mostrarConsultaPelicula);
+
+// Funciones para mostrar formularios
+function mostrarConsultaLocalidades() {
+    ocultarFormularios();
+    document.getElementById("consultaLocalidades").style.display = 'block';
+    cargarProvincias("selProvConLoc");
+}
+
+function mostrarNuevaSala() {
+    ocultarFormularios();
+    document.getElementById("salas").style.display = 'block';
+    cargarProvincias("selProvRegSala");
+}
+
+function mostrarNuevaPelicula() {
+    ocultarFormularios();
+    document.getElementById("peliculas").style.display = 'block';
+    cargarSalas();
+}
+
+function mostrarConsultaPelicula() {
+    ocultarFormularios();
+    document.getElementById("peliculas").style.display = 'block';
+    cargarSalas();
+}
+
+// Función para importar provincias
+function importarProvincias() {
+    const xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4) {
+            if (this.status == 200) {
+                alert("Provincias importadas correctamente");
+            } else {
+                alert("Error al importar provincias");
+            }
+        }
+    };
+    xhttp.open("GET", "./importar/txt/Provincias.txt", true);
+    xhttp.send();
+}
+
+// Función para cargar provincias en los select
+function cargarProvincias(selectId) {
+    const xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            const provincias = JSON.parse(this.responseText);
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">Seleccione una provincia</option>';
+            provincias.forEach(provincia => {
+                select.innerHTML += `<option value="${provincia.nombre}">${provincia.nombre}</option>`;
+            });
+        }
+    };
+    xhttp.open("GET", "./php/consultaProvincias.php", true);
+    xhttp.send();
+}
+
+// Event listener para cargar localidades cuando se selecciona provincia
+document.getElementById("selProvRegSala").addEventListener("change", function() {
+    const provincia = this.value;
+    if (provincia) {
+        cargarLocalidades(provincia, "selLocRegSala");
+        document.getElementById("selLocRegSala").disabled = false;
+    }
+});
+
+// Función para cargar localidades
+function cargarLocalidades(provincia, selectId) {
+    const xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            const localidades = JSON.parse(this.responseText);
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">Seleccione una localidad</option>';
+            localidades.forEach(localidad => {
+                select.innerHTML += `<option value="${localidad.poblacion}">${localidad.poblacion}</option>`;
+            });
+        }
+    };
+    xhttp.open("GET", `./php/consultaLocalidades.php?provincia=${provincia}`, true);
+    xhttp.send();
+}
+
+// Función para cargar salas
+function cargarSalas() {
+    const xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            const salas = JSON.parse(this.responseText);
+            const selects = document.querySelectorAll("#selRegSala, #selConSala");
+            selects.forEach(select => {
+                select.innerHTML = '<option value="">Seleccione una sala</option>';
+                salas.forEach(sala => {
+                    select.innerHTML += `<option value="${sala.idSala}">${sala.nombre} (${sala.poblacion})</option>`;
+                });
+            });
+        }
+    };
+    xhttp.open("GET", "./php/consultaSalas.php", true);
+    xhttp.send();
+}
+
+// Event listeners para los formularios
+document.getElementById("frmConsultaLocalidades").addEventListener("submit", function(e) {
+    e.preventDefault();
+    consultarLocalidades();
+});
+
+document.getElementById("frmRegSala").addEventListener("submit", function(e) {
+    e.preventDefault();
+    registrarSala();
+});
+
+document.getElementById("frmRegPeliculas").addEventListener("submit", function(e) {
+    e.preventDefault();
+    registrarPelicula();
+});
+
+document.getElementById("frmConPeliculas").addEventListener("submit", function(e) {
+    e.preventDefault();
+    consultarPeliculas();
+});
